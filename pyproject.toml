@@ -1,0 +1,16 @@
+[project]
+name = "planaria-regeneration-spatial"
+version = "0.1.0"
+description = "Spatial transcriptomics analysis of neural regeneration in planarians (Visium)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "anndata>=0.12",
+    "ipykernel>=7.2",
+    "matplotlib>=3.10",
+    "numpy>=2.0",
+    "pandas>=2.3",
+    "scanpy>=1.12",
+    "scikit-learn>=1.5",
+    "scipy>=1.14",
+]

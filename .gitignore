@@ -1,0 +1,24 @@
+# Data (too large for GitHub; see README for download instructions)
+data/Scanpy_Visium/
+*.h5ad
+data/*.zip
+
+# Python
+__pycache__/
+*.py[oc]
+.venv/
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+.vscode/
+.claude/
+
+# STAT530 coursework (homework, original project, lecture slides): local reference only
+coursework/
+
+# BLAST table: not public until permission is confirmed
+data/smed_blast.csv
+
+# Personal working notes
+notes/
