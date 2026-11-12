@@ -1,39 +1,61 @@
 # Spatial dynamics of neural regeneration in planarians
 
-Re-analysis of public Visium spatial transcriptomics data from a planarian regeneration time course (0 hpa to 7 dpa; [Cui et al., 2023](https://www.nature.com/articles/s41467-023-39016-0)). The project follows one question chain: which cell types change after amputation, where neural tissue is lost and rebuilt, how it is rebuilt, and whether the rebuilt tissue is molecularly mature.
+Re-analysis of public Visium spatial transcriptomics data from a planarian regeneration time course (0 hpa to 7 dpa; [Cui et al., 2023](https://www.nature.com/articles/s41467-023-39016-0)). Starting from raw counts, the analysis follows tissue changes after amputation, narrows down to the nervous system, and tracks where neural tissue is lost, how it is rebuilt, and whether the rebuilt tissue is molecularly mature.
 
 **Main finding:** neural tissue at the wound is spatially rebuilt by 7 dpa, but its gene expression has only partly returned to the uninjured state. Spatial completion comes before molecular completion.
 
-## Questions
+## Background
 
-1. Which cell types change the most during regeneration?
-2. Are neurons lost and rebuilt specifically at the wound?
-3. How are neurons repopulated at the wound?
-4. Is the regenerated tissue at 7 dpa molecularly mature?
+Planarians can regrow any missing body part, including the entire brain, from adult pluripotent stem cells called neoblasts. Most of what is known about this comes from imaging single markers or from dissociated single cells, which lose tissue position. Spatial transcriptomics keeps both gene expression and position, so it can show where tissue is lost and rebuilt after an injury and in what order.
 
-## Key results
+## Analysis overview
 
-**Q1. Neurons are the most dynamic differentiated cell type.** All seven cell types change over time; neurons follow a V-shaped trajectory (high at 12 hpa, lowest at 3 dpa, recovered by 7 dpa).
+| Step | Analysis | Notebook |
+|------|----------|----------|
+| 1 | Quality control, normalization, batch correction, clustering, cell-type labels | `01_qc_integration_clustering.ipynb` |
+| 2 | Cell-type dynamics across the time course | `02_analysis.ipynb` |
+| 3 | Neural loss and recovery at the wound | `02_analysis.ipynb` |
+| 4 | Spatial organization of regenerating neurons | `02_analysis.ipynb` |
+| 5 | Molecular maturity of the regenerated tissue | `02_analysis.ipynb` |
 
-![Q1](figures/q1_celltype_kinetics.png)
+## Results
 
-**Q2. Neuronal loss and recovery are wound-specific.** Neurons are depleted at the wound at 12 hpa and 1 dpa, then exceed wound-distal levels at 7 dpa (0.34 vs 0.23).
+### 1. Preprocessing and integration
 
-![Q2](figures/q2_wound_vs_distal.png)
+All six timepoints are combined and processed together: QC, normalization, highly variable genes, PCA, Harmony batch correction (timepoint as batch), Leiden clustering, and preliminary cell-type labels from marker genes (`notebooks/01_qc_integration_clustering.ipynb`). Harmony removes the separation between timepoints seen in the uncorrected embedding.
 
-**Q3. Spatial statistics best fit a local burst of neuron production followed by self-organization.** At 7 dpa, neurons are the most spatially clustered of the time course and most strongly separated from neoblasts.
+![Harmony](figures/01_umap_harmony.png)
 
-![Q3](figures/q3_morans_i.png)
+### 2. Neurons are the most dynamic differentiated cell type
 
-**Q4. The regenerated tissue is only partly mature.** About 35% of the baseline wound-region gene signature is recovered at 7 dpa; genes specific to regeneration are enriched for muscle and extracellular matrix, not for cell cycle or stem-cell programs.
+All seven cell types change over time; neurons follow a V-shaped trajectory (high at 12 hpa, lowest at 3 dpa, recovered by 7 dpa).
 
-![Q4](figures/q4_enrichment.png)
+![Cell-type dynamics](figures/q1_celltype_kinetics.png)
+
+### 3. Neuronal loss and recovery are wound-specific
+
+Neurons are depleted at the wound at 12 hpa and 1 dpa, then exceed wound-distal levels at 7 dpa (0.34 vs 0.23).
+
+![Wound vs distal](figures/q2_wound_vs_distal.png)
+
+### 4. Neurons are rebuilt by a local burst followed by self-organization
+
+Spatial statistics fit this model best. At 7 dpa, neurons are the most spatially clustered of the time course and most strongly separated from neoblasts.
+
+![Moran's I](figures/q3_morans_i.png)
+
+### 5. The regenerated tissue is only partly mature
+
+About 35% of the baseline wound-region gene signature is recovered at 7 dpa; genes specific to regeneration are enriched for muscle and extracellular matrix, not for cell cycle or stem-cell programs.
+
+![Enrichment](figures/q4_enrichment.png)
 
 ## Methods
 
+- **Preprocessing:** QC (spots with ≥500 counts and ≥200 genes; genes in ≥10 spots), library-size normalization and log transform, 2,000 highly variable genes, 50-component PCA, Harmony batch correction, Leiden clustering (resolution 0.4), and marker-based labels using BLAST-mapped human orthologs.
 - **Cell-type proportions:** cell2location estimates (provided with the dataset) divided by their per-spot sum.
 - **Anatomical alignment:** pharynx center located from FOXA1-ortholog expression; wound-proximal spots defined by distance from the cut edges.
-- **Statistics:** Kruskal-Wallis (Q1), two-sided Mann-Whitney U (Q2), Spearman correlation and univariate/bivariate Moran's I on a k-nearest-neighbor graph with permutation tests and spatial block bootstrap (Q3), Wilcoxon differential expression with Benjamini-Hochberg correction and Fisher's exact test for gene-set enrichment (Q4).
+- **Statistics:** Kruskal-Wallis for cell-type dynamics; two-sided Mann-Whitney U for wound vs distal comparisons; Spearman correlation and univariate/bivariate Moran's I on a k-nearest-neighbor graph, with permutation tests and spatial block bootstrap, for spatial organization; Wilcoxon differential expression with Benjamini-Hochberg correction and Fisher's exact test for gene-set enrichment, for molecular maturity.
 - **Gene annotation:** planarian (SMED) genes mapped to human gene symbols by BLAST best hit (`data/smed_blast.csv`, not included in this repository; see Data source).
 
 ## Limitations
@@ -49,17 +71,19 @@ Re-analysis of public Visium spatial transcriptomics data from a planarian regen
 ```bash
 uv sync
 # put the .h5ad files in data/Scanpy_Visium/ (see data/README.md)
-uv run jupyter lab notebooks/analysis.ipynb
+uv run jupyter lab
 ```
 
-Running the notebook also writes the figures to `figures/`.
+Run `notebooks/01_qc_integration_clustering.ipynb` first; it writes `data/processed/01_integrated.h5ad` (not tracked). `notebooks/02_analysis.ipynb` reads the raw files directly and can be run on its own. The notebooks also write their figures to `figures/`.
 
 ## Repository layout
 
 ```
-notebooks/analysis.ipynb   main analysis
-data/                      inputs (large files not tracked)
-figures/                   figures exported by the notebook
+notebooks/01_qc_integration_clustering.ipynb   QC, normalization, Harmony, clustering, labels
+notebooks/02_analysis.ipynb                     cell-type dynamics, wound analysis, spatial statistics, maturity
+docs/notes.md                                  background notes on methods (batch correction, Harmony)
+data/                                          inputs (large files not tracked)
+figures/                                       figures exported by the notebooks
 ```
 
 ## Data source
