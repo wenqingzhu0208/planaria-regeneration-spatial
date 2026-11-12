@@ -2,6 +2,7 @@
 data/Scanpy_Visium/
 *.h5ad
 data/*.zip
+data/processed/
 
 # Python
 __pycache__/
